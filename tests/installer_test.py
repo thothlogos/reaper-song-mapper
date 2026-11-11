@@ -7,6 +7,11 @@ import unittest
 import sys
 import plistlib
 import shutil
+import importlib.util
+import shlex
+import hashlib
+import io
+import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -45,9 +50,72 @@ class InstallerTests(unittest.TestCase):
         (self.api / 'imgui.lua').write_text('-- existing shim fixture\n')
 
     def run_installer(self, *args):
-        return subprocess.run(['bash', str(ROOT / 'Install Song Mapper.command'),
+        return subprocess.run(['bash', str(getattr(self, 'installer', ROOT / 'Install Song Mapper.command')),
             '--resource-path', str(self.resource), '--reaper-app', str(self.app), '--no-launch', *args],
             env=self.env, text=True, capture_output=True)
+
+    def standalone(self):
+        spec = importlib.util.spec_from_file_location('build_release', ROOT / 'scripts/build_release.py')
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        installer, self.payload = module.build('v1.0.0-test', self.base / 'release')
+        isolated = self.base / 'download'; isolated.mkdir()
+        self.installer = isolated / installer.name
+        shutil.copy(installer, self.installer)
+        mock = self.bin / 'curl'
+        mock.write_text('#!/bin/bash\nwhile [ "$#" -gt 0 ]; do if [ "$1" = -o ]; then shift; exec /bin/cp ' + shlex.quote(str(self.payload)) + ' "$1"; fi; shift; done\nexit 1\n')
+        mock.chmod(0o755)
+
+    def test_standalone_downloads_matching_release_and_is_repeatable(self):
+        self.existing(); self.standalone()
+        for _ in range(2):
+            result = self.run_installer()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn('Downloading Song Mapper v1.0.0-test', result.stdout)
+        self.assertEqual((self.dest / 'Song Mapper.lua').read_bytes(), (ROOT / 'Song Mapper.lua').read_bytes())
+        self.assertFalse(list((self.resource / 'Scripts').glob('.song-mapper-backup.*/runtime')))
+
+    def test_standalone_checksum_failure_leaves_previous_install_intact(self):
+        self.existing()
+        self.assertEqual(self.run_installer().returncode, 0)
+        before = (self.dest / 'Song Mapper.lua').read_bytes()
+        self.standalone(); self.payload.write_bytes(b'corrupt download')
+        result = self.run_installer()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('checksum mismatch', result.stderr)
+        self.assertEqual((self.dest / 'Song Mapper.lua').read_bytes(), before)
+
+    def test_standalone_rejects_unsafe_archive_before_extraction(self):
+        self.existing(); self.standalone()
+        payload = io.BytesIO()
+        with tarfile.open(fileobj=payload, mode='w:gz') as archive:
+            info = tarfile.TarInfo('../escaped'); info.size = 4
+            archive.addfile(info, io.BytesIO(b'evil'))
+        data = payload.getvalue()
+        old_hash = hashlib.sha256(self.payload.read_bytes()).hexdigest()
+        self.payload.write_bytes(data)
+        self.installer.write_text(self.installer.read_text().replace(old_hash, hashlib.sha256(data).hexdigest()))
+        result = self.run_installer()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('Unexpected release archive contents', result.stderr)
+        self.assertFalse(self.dest.exists())
+
+    def test_standalone_rejects_link_with_otherwise_valid_manifest(self):
+        self.existing(); self.standalone()
+        old_hash = hashlib.sha256(self.payload.read_bytes()).hexdigest()
+        payload = io.BytesIO()
+        with tarfile.open(self.payload) as source, tarfile.open(fileobj=payload, mode='w:gz') as archive:
+            for index, member in enumerate(source):
+                if index == 0:
+                    member.type, member.linkname, member.size = tarfile.SYMTYPE, '../escaped', 0
+                    archive.addfile(member)
+                else:
+                    archive.addfile(member, source.extractfile(member))
+        data = payload.getvalue(); self.payload.write_bytes(data)
+        self.installer.write_text(self.installer.read_text().replace(old_hash, hashlib.sha256(data).hexdigest()))
+        result = self.run_installer()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('link or non-regular file', result.stderr)
+        self.assertFalse(self.dest.exists())
 
     def test_dry_run_missing_dependency_has_no_writes(self):
         result = self.run_installer('--dry-run')

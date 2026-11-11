@@ -2,6 +2,9 @@
 # Compatible with Apple's Bash 3.2. No Python, Homebrew, or administrator access.
 set -euo pipefail
 SOURCE_DIR=$(cd "$(dirname "$0")" && pwd -P)
+# Replaced by scripts/build_release.py; repository copies use local source files.
+RELEASE_TAG='__SONG_MAPPER_RELEASE_TAG__'
+RELEASE_SHA256='__SONG_MAPPER_RELEASE_SHA256__'
 APP=/Applications/REAPER.app
 RESOURCE="$HOME/Library/Application Support/REAPER"
 TARGET_ARCH=$(uname -m)
@@ -65,9 +68,18 @@ MINOR=$((10#${BASH_REMATCH[2]}))
 BINARY="$APP/Contents/MacOS/REAPER"
 [ -x "$BINARY" ] || fail 'The selected app has no REAPER executable.'
 /usr/bin/file -b "$BINARY" | /usr/bin/grep -q "$TARGET_ARCH" || fail "This REAPER app does not contain the $TARGET_ARCH architecture. Try --arch x86_64 for Intel REAPER."
-for entry in 'Song Mapper.lua' song_mapper/model.lua song_mapper/codec.lua song_mapper/project.lua song_mapper/session.lua song_mapper/ui.lua song_mapper/compat.lua installer/register.lua; do
-  [ -f "$SOURCE_DIR/$entry" ] || fail "Incomplete download: missing $entry. Extract the entire repository ZIP first."
-done
+RUNTIME_FILES=('Song Mapper.lua' song_mapper/model.lua song_mapper/codec.lua song_mapper/project.lua song_mapper/session.lua song_mapper/ui.lua song_mapper/compat.lua installer/register.lua)
+validate_source() {
+  for entry in "${RUNTIME_FILES[@]}"; do
+    [ -f "$SOURCE_DIR/$entry" ] && [ ! -L "$SOURCE_DIR/$entry" ] || fail "Incomplete source: missing $entry. Download the standalone installer from GitHub Releases, or extract the complete repository ZIP."
+  done
+}
+if [ "$RELEASE_TAG" = '__SONG_MAPPER_RELEASE_TAG__' ]; then
+  validate_source
+  RELEASE_URL=
+else
+  RELEASE_URL="https://github.com/thothlogos/reaper-song-mapper/releases/download/$RELEASE_TAG/song-mapper-runtime.tar.gz"
+fi
 DEST="$RESOURCE/Scripts/Song Mapper"
 API_DIR="$RESOURCE/Scripts/ReaTeam Extensions/API"
 NATIVE="$RESOURCE/UserPlugins/reaper_imgui-$TARGET_ARCH.dylib"
@@ -95,6 +107,7 @@ done
 echo "REAPER: $VERSION ($TARGET_ARCH)"
 echo "Resource folder: $RESOURCE"
 echo "Song Mapper: $DEST"
+if [ -n "$RELEASE_URL" ]; then echo "Source: verified release $RELEASE_TAG"; fi
 if [ "$DRY_RUN" = 1 ]; then
   echo "Dry run: would install/update Song Mapper; ReaImGui download needed: $((1 - FOUND)). No files changed."
   exit 0
@@ -117,6 +130,24 @@ fetch() {
   ACTUAL=$(shasum -a 256 "$2"); ACTUAL=${ACTUAL%% *}
   [ "$ACTUAL" = "$3" ] || fail 'Dependency checksum mismatch. Nothing will be installed; please report this error.'
 }
+if [ -n "$RELEASE_URL" ]; then
+  echo "Downloading Song Mapper $RELEASE_TAG..."
+  fetch "$RELEASE_URL" "$WORK/song-mapper-runtime.tar.gz" "$RELEASE_SHA256"
+  # Compare the exact archive manifest before extraction. Reject extra members,
+  # duplicates, traversal, links, and non-regular entries, even with a valid hash.
+  tar -tzf "$WORK/song-mapper-runtime.tar.gz" > "$WORK/members" || fail 'Cannot read the release archive.'
+  printf '%s\n' "${RUNTIME_FILES[@]}" | LC_ALL=C sort > "$WORK/expected"
+  LC_ALL=C sort "$WORK/members" > "$WORK/actual"
+  /usr/bin/diff -q "$WORK/expected" "$WORK/actual" >/dev/null || fail 'Unexpected release archive contents.'
+  tar -tvzf "$WORK/song-mapper-runtime.tar.gz" > "$WORK/details" || fail 'Cannot inspect the release archive.'
+  while IFS= read -r member; do
+    case "$member" in -*) ;; *) fail 'Release archive contains a link or non-regular file.' ;; esac
+  done < "$WORK/details"
+  mkdir "$WORK/source"
+  tar -xzf "$WORK/song-mapper-runtime.tar.gz" -C "$WORK/source" || fail 'Cannot extract the release archive.'
+  SOURCE_DIR="$WORK/source"
+  validate_source
+fi
 if [ "$FOUND" = 0 ]; then
   case "$TARGET_ARCH" in
     arm64) HASH=1f90cf004c0bbada45358609c943f601b2cb0e625ecf7739ae5df8708ab705ae ;;
