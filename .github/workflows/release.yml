@@ -25,10 +25,10 @@ jobs:
         run: |
           python tests/release_test.py
           python scripts/build_release.py "$RELEASE_TAG"
-          bash -n "dist/Install Song Mapper.command"
+          bash -n "dist/Install-Song-Mapper.command"
       - name: Create draft for review
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          gh release create "$RELEASE_TAG" --verify-tag --draft --title "Song Mapper $RELEASE_TAG" --notes "macOS: download Install Song Mapper.command, then run it after installing and quitting REAPER. See the README for installation details and macOS permissions." "dist/Install Song Mapper.command" dist/song-mapper-runtime.tar.gz dist/SHA256SUMS
+          gh release create "$RELEASE_TAG" --verify-tag --draft --title "Song Mapper $RELEASE_TAG" --notes "macOS: download Install-Song-Mapper.command, then run it after installing and quitting REAPER. See the README for installation details and macOS permissions." "dist/Install-Song-Mapper.command" dist/song-mapper-runtime.tar.gz dist/SHA256SUMS
