@@ -156,6 +156,8 @@ The song has 16 measures plus two count-in measures, lasting approximately **37.
 
 ## Development and verification
 
+GitHub Actions uses the same Python runner below with a pinned Lupa binary package containing Lua 5.4. This avoids installing Lua from Ubuntu package mirrors. Python remains a testing dependency only; REAPER users do not need it.
+
 The code is split into a pure song model, a non-executable data codec, a REAPER adapter, draft/revision coordination, and a ReaImGui interface. There is no network service or runtime package download.
 
 Run the pure Lua tests from the repository root:
@@ -168,7 +170,7 @@ If standalone Lua 5.4 is unavailable, the optional Python runner also checks syn
 
 ```sh
 python3 -m venv /tmp/song-mapper-tests
-/tmp/song-mapper-tests/bin/pip install lupa
+/tmp/song-mapper-tests/bin/pip install --only-binary=:all: -r tests/requirements.txt
 /tmp/song-mapper-tests/bin/python tests/run.py
 ```
 

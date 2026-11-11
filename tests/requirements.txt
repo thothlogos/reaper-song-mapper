@@ -1,0 +1,2 @@
+# Development/CI only; includes Lua 5.4.
+lupa==2.8
