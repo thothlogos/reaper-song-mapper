@@ -54,6 +54,17 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(list(self.resource.iterdir()), [self.resource / 'reaper.ini'])
 
+    def test_version_range_is_open_ended(self):
+        for version in ['7.82', '7.83.0', '7.84', '7.85', '7.82.0_3385784u', '7.100', '8.0']:
+            with self.subTest(version=version):
+                (self.app / 'Contents/Info.plist').write_bytes(plistlib.dumps({'CFBundleShortVersionString': version}))
+                result = self.run_installer('--dry-run')
+                self.assertEqual(result.returncode, 0, result.stderr)
+        for version in ['7.81', '7.9', '6.99', 'unknown']:
+            with self.subTest(version=version):
+                (self.app / 'Contents/Info.plist').write_bytes(plistlib.dumps({'CFBundleShortVersionString': version}))
+                self.assertNotEqual(self.run_installer('--dry-run').returncode, 0)
+
     def test_bad_download_is_rejected_before_install(self):
         mock = self.bin / 'curl'
         mock.write_text('#!/bin/bash\nwhile [ "$#" -gt 0 ]; do if [ "$1" = -o ]; then shift; echo corrupt > "$1"; exit 0; fi; shift; done\nexit 1\n')

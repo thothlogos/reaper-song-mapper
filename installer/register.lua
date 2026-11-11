@@ -6,6 +6,8 @@ local function stop(message)
   r.ShowMessageBox(message, 'Song Mapper installation', 0)
   r.defer(function() end)
 end
+local compatibility_error = dofile(root .. 'song_mapper/compat.lua').check(r)
+if compatibility_error then stop(compatibility_error); return end
 local expected = r.GetResourcePath() .. '/Scripts/Song Mapper/'
 if root ~= expected then
   stop('This REAPER instance uses a different resource folder. Run the installer with --resource-path pointing to the folder shown by Options > Show REAPER resource path.\n\nNo action was registered.')

@@ -82,6 +82,7 @@ REAPER resource folder/
     └── Song Mapper/
         ├── Song Mapper.lua
         └── song_mapper/
+            ├── compat.lua
             ├── codec.lua
             ├── model.lua
             ├── project.lua
@@ -131,6 +132,27 @@ The preview uses measure 1 for the physical project start. Use a standard projec
 **BPM always means quarter notes per minute.** At 120 BPM, one 4/4 measure lasts two seconds, one 6/8 measure lasts 1.5 seconds, and one 7/8 measure lasts 1.75 seconds. The duration estimate assumes project playback rate 1.0. Tempo changes are immediate, with a tempo/time-signature marker at every section start, including consecutive sections that share a tempo.
 
 Supported inputs: 1–10,000 whole measures per section, 0–10,000 count-in measures, BPM 1–960 (fractions allowed), numerator 1–64, and denominator 1, 2, 4, 8, 16, 32, or 64. A map may contain up to 1,000 sections and 1,000,000 total measures. Custom labels allow up to 120 UTF-8 bytes and cannot contain control characters.
+
+## REAPER version compatibility
+
+**7.82 is the minimum supported version, not an exact requirement.** Song Mapper accepts **7.82, 7.83, 7.84, 7.85, and later releases** without an upper version limit. Version comparisons use separate major/minor numbers, so 7.100 and 8.0 are accepted too. The macOS installer and runtime both check the minimum; startup also checks that the required scripting functions exist before opening the editor or registering the action.
+
+| REAPER version | Current evidence |
+| --- | --- |
+| 7.82 | Full integration suite exercised on the development Mac |
+| 7.83–7.85 | Expected compatible: version-gate tests pass; official release notes reviewed; all 36 required core API/helper names appear in the 7.85 reference. Full REAPER integration runs on these versions are still pending. |
+| Later stable releases | Accepted by design; required capabilities are checked at startup. Future behavior cannot be guaranteed without testing. |
+| Before 7.82 | Outside the supported/tested range; installer and startup refuse it. |
+
+The [7.83–7.85 release notes](https://www.reaper.fm/whatsnew.txt) do not document relevant breaking changes to the tempo, measure, marker, or project-state calls used here. The [7.85 API reference](https://www.reaper.fm/sdk/reascript/reascripthelp.html) retains the older marker APIs used for compatibility with 7.82; newer region/marker APIs are not required.
+
+Version-related snags to keep in mind:
+
+- **ReaImGui has its own version/API contract.** We request its `0.10` compatibility API, rather than binding to the installed extension's newest API. Existing newer installations are reused if that API loads successfully; incompatible extensions produce a startup explanation. The automatic fresh install pins 0.10.0.5 for reproducibility.
+- **REAPER version, macOS version, and CPU architecture are separate requirements.** On older Macs choose the vendor's older-OS-compatible Intel REAPER build; newer Universal builds may require a newer macOS. Matching the REAPER process architecture remains essential for native extensions.
+- **API availability does not prove identical behavior.** Tempo-envelope point metadata and undoable master-track data are compatibility-sensitive areas. After a REAPER or ReaImGui update, run `tests/reaper_integration.lua` in disposable projects before relying on the updated workstation. The suite checks Undo/Redo, mixed-meter boundaries, save/reopen, conflict detection, and failed-apply recovery.
+
+REAPER upgrades at the same app/resource location do not require reinstalling Song Mapper. If moving between REAPER installations or resource folders, install/register it in the new resource folder.
 
 ## Revisit a map
 

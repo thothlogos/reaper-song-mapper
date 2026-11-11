@@ -58,15 +58,14 @@ case "$TARGET_ARCH" in arm64|x86_64) ;; *) fail 'Only 64-bit Intel and Apple Sil
 RESOURCE=$(cd "$RESOURCE" && pwd -P)
 APP=$(cd "$APP" && pwd -P)
 VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP/Contents/Info.plist")
-MAJOR=${VERSION%%.*}
-REST=${VERSION#*.}
-MINOR=${REST%%[^0-9]*}
-case "$MAJOR:$MINOR" in *[!0-9:]*|:*) fail 'Cannot determine the installed REAPER version.' ;; esac
+[[ "$VERSION" =~ ^([0-9]+)\.([0-9]+) ]] || fail 'Cannot determine the installed REAPER version.'
+MAJOR=$((10#${BASH_REMATCH[1]}))
+MINOR=$((10#${BASH_REMATCH[2]}))
 [ "$MAJOR" -gt 7 ] || { [ "$MAJOR" = 7 ] && [ "$MINOR" -ge 82 ]; } || fail 'Please update REAPER to 7.82 or newer first.'
 BINARY="$APP/Contents/MacOS/REAPER"
 [ -x "$BINARY" ] || fail 'The selected app has no REAPER executable.'
 /usr/bin/file -b "$BINARY" | /usr/bin/grep -q "$TARGET_ARCH" || fail "This REAPER app does not contain the $TARGET_ARCH architecture. Try --arch x86_64 for Intel REAPER."
-for entry in 'Song Mapper.lua' song_mapper/model.lua song_mapper/codec.lua song_mapper/project.lua song_mapper/session.lua song_mapper/ui.lua installer/register.lua; do
+for entry in 'Song Mapper.lua' song_mapper/model.lua song_mapper/codec.lua song_mapper/project.lua song_mapper/session.lua song_mapper/ui.lua song_mapper/compat.lua installer/register.lua; do
   [ -f "$SOURCE_DIR/$entry" ] || fail "Incomplete download: missing $entry. Extract the entire repository ZIP first."
 done
 DEST="$RESOURCE/Scripts/Song Mapper"
