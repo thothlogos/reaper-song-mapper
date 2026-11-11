@@ -1,0 +1,17 @@
+name: Lua checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua 5.4
+        run: sudo apt-get update && sudo apt-get install -y lua5.4
+      - name: Check Lua syntax
+        run: git ls-files -z '*.lua' | xargs -0 -n 1 luac5.4 -p
+      - name: Run unit tests
+        run: lua5.4 tests/unit.lua

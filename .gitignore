@@ -1,8 +1,21 @@
+# OS metadata
 .DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
+# Generated test logs and disposable REAPER projects
 tests/*-results.txt
 tests/artifacts/
-*.rpp-bak
-*.RPP-bak
-*.rpp-undo
-*.RPP-UNDO
+
+# REAPER backups, undo history, and waveform caches (keep sample .rpp files)
+*.[rR][pP][pP]-[bB][aA][kK]
+*.[rR][pP][pP]-[uU][nN][dD][oO]
+*.[rR][eE][aA][pP][eE][aA][kK][sS]
+
+# Optional Python test environments and bytecode
+.venv/
+venv/
 __pycache__/
+*.py[cod]
+.pytest_cache/

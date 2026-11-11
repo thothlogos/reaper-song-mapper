@@ -1,0 +1,8 @@
+# Keep source portable without rewriting native REAPER project files.
+*.lua text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+*.rpp -text
