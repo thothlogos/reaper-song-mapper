@@ -39,7 +39,7 @@ def build(tag, output):
     installer = installer.replace("RELEASE_SHA256='__SONG_MAPPER_RELEASE_SHA256__'", f"RELEASE_SHA256='{digest}'")
     archive_path = output / 'song-mapper-runtime.tar.gz'
     archive_path.write_bytes(data)
-    installer_path = output / 'Install Song Mapper.command'
+    installer_path = output / 'Install-Song-Mapper.command'
     installer_path.write_text(installer)
     installer_path.chmod(0o755)
     lines = [f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}'

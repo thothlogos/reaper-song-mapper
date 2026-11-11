@@ -19,6 +19,7 @@ class ReleaseTests(unittest.TestCase):
             second, other = builder.build('v1.2.3', Path(temporary) / 'second')
             self.assertEqual(payload.read_bytes(), other.read_bytes())
             self.assertEqual(first.read_bytes(), second.read_bytes())
+            self.assertEqual(first.name, 'Install-Song-Mapper.command')
             text = first.read_text()
             self.assertIn("RELEASE_TAG='v1.2.3'", text)
             self.assertIn("RELEASE_SHA256='" + hashlib.sha256(payload.read_bytes()).hexdigest() + "'", text)

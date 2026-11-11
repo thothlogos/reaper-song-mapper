@@ -4,11 +4,11 @@ Build your band's song structure as a list of sections, then generate colored re
 
 ## Easy installation on macOS
 
-Install **REAPER 7.82+** first, launch it once, then quit it. From [GitHub Releases](https://github.com/thothlogos/reaper-song-mapper/releases), download the **`Install Song Mapper.command` release attachment**. This standalone file downloads and verifies its matching Song Mapper release automatically; you do not need Git, a GitHub account, the repository ZIP, or adjacent Lua files.
+Install **REAPER 7.82+** first, launch it once, then quit it. From [GitHub Releases](https://github.com/thothlogos/reaper-song-mapper/releases), download the **`Install-Song-Mapper.command` release attachment**. This standalone file downloads and verifies its matching Song Mapper release automatically; you do not need Git, a GitHub account, the repository ZIP, or adjacent Lua files.
 
 Release attachments must be published before this route is available. As a development/manual fallback, download and extract the repository ZIP and run its installer with the whole extracted folder together. The installer in the repository is a template/local-source installer; copying that file alone is not equivalent to downloading a generated release attachment. If Finder does not allow it to run, use the manual instructions below or run `bash "Install Song Mapper.command"` from Terminal in that folder; the installer does not remove quarantine flags or change macOS security settings.
 
-A directly downloaded `.command` may lose its executable permission. If double-clicking reports a permission error, run `bash ~/Downloads/"Install Song Mapper.command"` in Terminal (adjust the path if saved elsewhere). A signed/notarized app installer would be needed to further streamline macOS security prompts.
+A directly downloaded `.command` may lose its executable permission. If double-clicking reports a permission error, run `bash ~/Downloads/Install-Song-Mapper.command` in Terminal (adjust the path if saved elsewhere). A signed/notarized app installer would be needed to further streamline macOS security prompts.
 
 The installer uses built-in Bash 3.2 and macOS tools: no Python, Homebrew, compiler, administrator access, or ReaPack is required. It installs missing ReaImGui files directly from the official **0.10.0.5** release using pinned SHA-256 checksums, installs Song Mapper, then opens REAPER to verify the API and register the action. Add the **optional toolbar button** using the instructions in the completion dialog. REAPER itself is installed separately so you can choose the correct OS build and complete its normal setup.
 
@@ -18,12 +18,12 @@ Save and quit REAPER before running the installer. It refuses multiple ReaImGui 
 
 **Compatibility:** intended for 64-bit Intel Macs on macOS **10.12+**, plus Apple Silicon Macs. The pinned Intel ReaImGui binary declares a minimum macOS of 10.9. This installer has been tested on the development Mac and in disposable resource folders, not on historical macOS releases; old system TLS certificates and vendor runtime compatibility still require real-machine verification. No guarantee of every ten-year-old Mac is implied. Existing 32-bit installs use the manual route.
 
-Advanced options (run beside the downloaded installer, or from the extracted repository folder):
+Advanced options for a release download (use `Install Song Mapper.command` instead when running from an extracted repository):
 
 ```sh
-bash "Install Song Mapper.command" --dry-run
-bash "Install Song Mapper.command" --arch x86_64
-bash "Install Song Mapper.command" --reaper-app "/Applications/REAPER.app" --resource-path "/path/to/REAPER/resources"
+bash Install-Song-Mapper.command --dry-run
+bash Install-Song-Mapper.command --arch x86_64
+bash Install-Song-Mapper.command --reaper-app "/Applications/REAPER.app" --resource-path "/path/to/REAPER/resources"
 ```
 
 `--dry-run` makes no changes or downloads, so it does not verify network availability or release contents. Standalone installers always fetch their pinned release, even when local source files happen to be nearby. `--arch x86_64` supports Intel REAPER on an Apple Silicon Mac with Rosetta already installed; the default selects the hardware's native architecture. `--no-launch` installs files only; load the installed `Finish Installation.lua` through Actions to complete verification and registration. Standard resource paths are detected automatically. For portable/custom installs, provide the actual resource path; the registration script verifies it against the running REAPER instance and refuses a mismatch.
@@ -199,7 +199,7 @@ Create a version tag such as `v1.0.0` pointing to the tested commit that include
 
 The release has three matching attachments:
 
-- **`Install Song Mapper.command`**: the only file users download and run.
+- **`Install-Song-Mapper.command`**: the only file users download and run.
 - **`song-mapper-runtime.tar.gz`**: the package downloaded automatically by that installer; keep it attached to the same release.
 - **`SHA256SUMS`**: checksums for verification.
 
