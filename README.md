@@ -2,7 +2,29 @@
 
 Build your band's song structure as a list of sections, then generate colored regions and a tempo/time-signature map in one operation. REAPER's metronome follows the generated map.
 
-## Installation on a fresh computer
+## Easy installation on macOS
+
+Install **REAPER 7.82+** first, launch it once, then quit it. Download and extract this repository's ZIP, then double-click **`Install Song Mapper.command`** in the extracted folder. Keep the whole folder together. If Finder does not allow it to run, use the manual instructions below or run `bash "Install Song Mapper.command"` from Terminal in that folder; the installer does not remove quarantine flags or change macOS security settings.
+
+The installer uses built-in Bash 3.2 and macOS tools: no Python, Homebrew, compiler, administrator access, or ReaPack is required. It installs missing ReaImGui files directly from the official **0.10.0.5** release using pinned SHA-256 checksums, installs Song Mapper, then opens REAPER to verify the API and register the action. Add the **optional toolbar button** using the instructions in the completion dialog. REAPER itself is installed separately so you can choose the correct OS build and complete its normal setup.
+
+Existing ReaImGui is reused without updates. If it is too old or incomplete, installation stops with repair instructions; use ReaPack to update a dependency already managed by ReaPack. Directly installed ReaImGui files are not registered as ReaPack-owned packages. If you later adopt ReaPack, manage ReaImGui there deliberately; the installer never edits ReaPack's package database.
+
+Save and quit REAPER before running the installer. It refuses multiple ReaImGui binaries, architecture conflicts, symbolic-link destinations, concurrent installs, and unmanaged folders already named `Scripts/Song Mapper`. Move a manually installed folder aside yourself before adopting the installer. Installer-managed updates preserve the previous runtime under `Scripts/.song-mapper-backup.*`; interrupted file replacement is rolled back. It does not edit your song projects or toolbar configuration. A failed native-extension load can leave verified files installed; repair the dependency and rerun `Finish Installation.lua` from REAPER's Actions window to finish registration.
+
+**Compatibility:** intended for 64-bit Intel Macs on macOS **10.12+**, plus Apple Silicon Macs. The pinned Intel ReaImGui binary declares a minimum macOS of 10.9. This installer has been tested on the development Mac and in disposable resource folders, not on historical macOS releases; old system TLS certificates and vendor runtime compatibility still require real-machine verification. No guarantee of every ten-year-old Mac is implied. Existing 32-bit installs use the manual route.
+
+Advanced options (run from the extracted folder):
+
+```sh
+bash "Install Song Mapper.command" --dry-run
+bash "Install Song Mapper.command" --arch x86_64
+bash "Install Song Mapper.command" --reaper-app "/Applications/REAPER.app" --resource-path "/path/to/REAPER/resources"
+```
+
+`--dry-run` makes no changes or downloads. `--arch x86_64` supports Intel REAPER on an Apple Silicon Mac with Rosetta already installed; the default selects the hardware's native architecture. `--no-launch` installs files only; load the installed `Finish Installation.lua` through Actions to complete verification and registration. Standard resource paths are detected automatically. For portable/custom installs, provide the actual resource path; the registration script verifies it against the running REAPER instance and refuses a mismatch.
+
+## Manual installation on a fresh computer
 
 **ReaPack is a third-party extension; it is not included with a fresh REAPER install.** Install the components in this order: **REAPER → ReaPack → ReaImGui → Song Mapper**. Internet access is needed for the downloads; Song Mapper itself runs locally.
 
@@ -151,6 +173,7 @@ The song has 16 measures plus two count-in measures, lasting approximately **37.
 - `song_mapper/`: runtime modules for song data, storage, REAPER integration, draft state, and UI.
 - `examples/`: the tracked sample REAPER project, without recordings.
 - `tests/`: unit tests, the optional Python runner, and manual REAPER integration scripts. Generated logs and project artifacts are ignored.
+- `installer/` and `Install Song Mapper.command`: macOS installation and REAPER action registration.
 - `.github/workflows/`: automated Lua syntax and unit checks for pushes and pull requests. Real REAPER integration tests remain manual.
 - [VALIDATION.md](VALIDATION.md): recorded verification results and platform limitations.
 

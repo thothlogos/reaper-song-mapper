@@ -15,3 +15,9 @@ Implementation findings:
 
 - REAPER project extension data does not follow Undo/Redo, but master-track `P_EXT` values do. Immutable saved revisions plus an undoable active reference preserve the correct editor state.
 - A no-op recovery checkpoint is optimized away by REAPER. Failed operations therefore change a private recovery stamp after rollback, creating a real checkpoint that clears ordinary Redo of the partial failure.
+
+## macOS installer (November 11, 2026)
+
+Eight isolated macOS tests cover a no-write dry run, repeat installation, dependency preservation, backups, conflicting binaries, concurrent locks, unmanaged folders, symlink destinations, failed download checksums, and rollback after replacement fails. Fixtures use a disposable fake app bundle and resource directory; they never launch REAPER. The existing 25 Lua tests and syntax checks still pass. The real development installation also passes preflight with `--dry-run`.
+
+Official ReaImGui 0.10.0.5 binaries and the Lua shim were downloaded and their SHA-256 digests pinned. Inspection of the Intel binary's Mach-O load commands reports minimum macOS 10.9. End-to-end installation on a fresh Mac, registration by the new installer, Rosetta execution, and macOS 10.12-era compatibility have not been verified on actual target machines. CI exercises installer safety on a modern macOS runner; it does not establish historical OS support.
