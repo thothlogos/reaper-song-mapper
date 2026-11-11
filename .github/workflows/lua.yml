@@ -19,4 +19,18 @@ jobs:
         run: |
           python -m pip install --only-binary=:all: -r tests/requirements.txt
       - name: Check Lua syntax and run unit tests
-        run: python tests/run.py
+        run: |
+          python tests/run.py
+          python tests/release_test.py
+  macos-installer:
+    runs-on: macos-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check Bash syntax and installer safety
+        run: |
+          /bin/bash -n "Install Song Mapper.command"
+          python tests/installer_test.py

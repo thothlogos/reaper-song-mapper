@@ -10,6 +10,13 @@ local function message(text)
   reaper.ShowMessageBox(text, 'Song Mapper', 0)
 end
 
+local compatibility_error = require('song_mapper.compat').check(reaper)
+if compatibility_error then
+  message(compatibility_error)
+  reaper.defer(function() end)
+  return
+end
+
 if not reaper.APIExists('ImGui_GetBuiltinPath') then
   message('Song Mapper needs ReaImGui 0.10 or newer.\n\nIn Extensions > ReaPack > Browse packages, search for "ReaImGui", install "ReaImGui: ReaScript binding for Dear ImGui", then restart REAPER.\n\nSee the README next to this script for toolbar setup.')
   reaper.defer(function() end)

@@ -1,12 +1,31 @@
 local model = require('song_mapper.model')
 local codec = require('song_mapper.codec')
 local Session = require('song_mapper.session')
+local compat = require('song_mapper.compat')
 local count = 0
 local function test(name, fn)
   fn(); count = count + 1; print('PASS ' .. name)
 end
 local function near(a, b) assert(math.abs(a - b) < 1e-9, tostring(a) .. ' ~= ' .. tostring(b)) end
 local function example() return model.example() end
+
+test('supports 7.82 through 7.85 and later versions without an upper limit', function()
+  for _, version in ipairs({'7.82', '7.83/macOS-arm64', '7.84.0', '7.85',
+    '7.82.0_3385784u', '7.100', '8.0', '10.0', '7.85+dev1111'}) do
+    assert(compat.supports(version), version)
+  end
+  for _, version in ipairs({'7.81', '7.9', '6.99', '', 'unknown'}) do
+    assert(not compat.supports(version), version)
+  end
+end)
+test('startup detects missing capabilities on newer REAPER versions', function()
+  local api = {}
+  for _, name in ipairs(compat.required) do api[name] = function() end end
+  api.GetAppVersion = function() return '8.0' end
+  assert(not compat.check(api))
+  api.SetTempoTimeSigMarker = nil
+  assert(compat.check(api):find('SetTempoTimeSigMarker'))
+end)
 
 test('example names and ranges without count-in', function()
   local doc = example(); doc.count_in = 0
