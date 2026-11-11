@@ -75,7 +75,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(self.native.read_bytes(), b'existing extension fixture')
         self.assertEqual((self.api / 'imgui.lua').read_text(), '-- existing shim fixture\n')
         backups = list((self.resource / 'Scripts').glob('.song-mapper-backup.*/runtime'))
-        self.assertEqual(len(backups), 1)
+        self.assertEqual(len(backups), 0)
 
     def test_unmanaged_install_is_preserved(self):
         self.existing(); self.dest.mkdir()

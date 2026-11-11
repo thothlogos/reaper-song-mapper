@@ -19,7 +19,7 @@ NEW_SHIM=
 fail() { echo "Installation stopped: $*" >&2; exit 1; }
 cleanup() {
   result=$?
-  if [ "$COMMITTED" = 0 ] && [ -n "$BACKUP" ]; then
+  if [ "$COMMITTED" = 0 ]; then
     if [ "$NEW_MOVED" = 1 ]; then rm -rf "$DEST"; fi
     if [ "$OLD_MOVED" = 1 ]; then mv "$BACKUP/runtime" "$DEST"; fi
     if [ -n "$NEW_NATIVE" ]; then rm -f "$NEW_NATIVE"; fi
@@ -135,18 +135,22 @@ cp -R "$SOURCE_DIR/song_mapper" "$WORK/runtime/"
 cp "$SOURCE_DIR/installer/register.lua" "$WORK/runtime/Finish Installation.lua"
 echo 'Song Mapper installer v1' > "$WORK/runtime/.song-mapper-install"
 mkdir -p "$RESOURCE/Scripts" "$RESOURCE/UserPlugins" "$API_DIR"
-BACKUP=$(mktemp -d "$RESOURCE/Scripts/.song-mapper-backup.XXXXXX")
-if [ -d "$DEST" ]; then mv "$DEST" "$BACKUP/runtime"; OLD_MOVED=1; fi
-mv "$WORK/runtime" "$DEST"
-NEW_MOVED=1
+if [ -d "$DEST" ] && /usr/bin/diff -qr "$WORK/runtime" "$DEST" >/dev/null 2>&1; then
+  echo 'Song Mapper files already match this version; skipping runtime replacement.'
+else
+  BACKUP=$(mktemp -d "$RESOURCE/Scripts/.song-mapper-backup.XXXXXX")
+  if [ -d "$DEST" ]; then mv "$DEST" "$BACKUP/runtime"; OLD_MOVED=1; fi
+  mv "$WORK/runtime" "$DEST"
+  NEW_MOVED=1
+fi
 if [ "$FOUND" = 0 ]; then
   NEW_NATIVE=$NATIVE; NEW_SHIM="$API_DIR/imgui.lua"
   cp "$WORK/imgui.dylib" "$NATIVE"
   cp "$WORK/imgui.lua" "$API_DIR/imgui.lua"
 fi
 COMMITTED=1
-echo 'Files installed. Existing runtime backup (if any):'
-echo "$BACKUP"
+echo 'Files verified and installed.'
+if [ -n "$BACKUP" ] && [ -d "$BACKUP/runtime" ]; then echo "Previous runtime backup: $BACKUP/runtime"; fi
 echo 'Dependencies already installed by ReaPack were preserved.'
 if [ "$LAUNCH" = 1 ]; then
   # REAPER accepts a ReaScript on its command line. Do not force-close any process.
